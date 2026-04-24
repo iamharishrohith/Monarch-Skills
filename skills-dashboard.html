@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no, maximum-scale=1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#6366f1">
+<link rel="manifest" href="manifest.json">
+<title>Antigravity Skills Dashboard</title>
+<script>if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js');</script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script src="https://unpkg.com/@capacitor/core@latest/dist/capacitor.js"></script>
+<script src="skills-data.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#f5f6fa;--bg2:#eef0f6;--surface:#ffffff;
+  --border:#e0e3ed;--border-hover:#caced8;
+  --text:#111827;--text-sec:#4b5563;--text-dim:#9ca3af;
+  --accent:#6366f1;--accent2:#818cf8;--accent-soft:rgba(99,102,241,.07);--accent-med:rgba(99,102,241,.14);
+  --green:#10b981;--green-bg:rgba(16,185,129,.08);
+  --amber:#f59e0b;--amber-dark:#d97706;
+  --red:#ef4444;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04);
+  --shadow:0 2px 8px rgba(0,0,0,.06);
+  --shadow-lg:0 12px 40px rgba(0,0,0,.08);
+  --shadow-accent:0 8px 24px rgba(99,102,241,.14);
+  --radius:14px;--radius-sm:10px;
+}
+body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;-webkit-font-smoothing:antialiased}
+::selection{background:var(--accent);color:#fff}
+
+/* === HEADER === */
+.header{position:sticky;top:0;z-index:100;background:linear-gradient(135deg,#f8f9ff 0%,#f0f1ff 50%,#f8f9ff 100%);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);padding:0 32px;height:64px;display:flex;align-items:center}
+.header-inner{max-width:1480px;width:100%;margin:0 auto;display:flex;align-items:center;gap:20px}
+.logo{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.logo-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--accent),#a78bfa);border-radius:10px;display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 12px rgba(99,102,241,.25)}
+.logo-text{font-size:18px;font-weight:800;color:var(--text);letter-spacing:-.3px}
+.logo-sub{font-weight:400;font-size:12px;color:var(--text-dim);background:var(--bg2);padding:3px 10px;border-radius:20px;margin-left:6px}
+
+/* Search */
+.search-wrap{flex:1;max-width:520px;position:relative}
+.search-wrap input{width:100%;padding:9px 14px 9px 40px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-size:13.5px;font-family:inherit;outline:none;transition:all .25s ease}
+.search-wrap input:focus{border-color:var(--accent);box-shadow:0 0 0 4px var(--accent-soft)}
+.search-wrap input::placeholder{color:var(--text-dim)}
+.search-wrap .s-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);pointer-events:none}
+.search-wrap .s-shortcut{position:absolute;right:10px;top:50%;transform:translateY(-50%);padding:2px 7px;border:1px solid var(--border);border-radius:5px;font-size:10px;font-weight:600;color:var(--text-dim);pointer-events:none;background:var(--bg)}
+
+/* Badges */
+.badges{display:flex;gap:8px;margin-left:auto}
+.badge{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:20px;font-size:11.5px;font-weight:600;background:var(--surface);border:1px solid var(--border);color:var(--text-sec);box-shadow:var(--shadow-sm)}
+.badge b{color:var(--accent);font-weight:800}
+
+/* === LAYOUT === */
+.layout{max-width:1480px;margin:0 auto;padding:24px 32px;display:flex;gap:28px}
+.sidebar{width:224px;flex-shrink:0;position:sticky;top:88px;height:calc(100vh - 108px);overflow-y:auto;padding-right:4px}
+.sidebar::-webkit-scrollbar{width:3px}
+.sidebar::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+.content-area{flex:1;min-width:0}
+
+/* === SIDEBAR BUTTONS === */
+.cat-section-label{font-size:10px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:var(--text-dim);padding:16px 12px 6px;margin-top:4px}
+.cat-btn{display:flex;align-items:center;gap:9px;width:100%;padding:8px 12px;border:none;background:transparent;color:var(--text-sec);font-size:13px;font-family:inherit;font-weight:500;border-radius:8px;cursor:pointer;transition:all .18s ease;text-align:left;margin-bottom:1px;position:relative}
+.cat-btn:hover{background:var(--accent-soft);color:var(--text)}
+.cat-btn.active{background:var(--accent);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(99,102,241,.2)}
+.cat-btn.active .cat-count{background:rgba(255,255,255,.2);color:#fff}
+.cat-btn .cat-icon{width:16px;height:16px;flex-shrink:0;opacity:.7}
+.cat-btn.active .cat-icon{opacity:1}
+.cat-btn .cat-count{margin-left:auto;font-size:10px;font-weight:700;background:var(--bg2);padding:2px 8px;border-radius:10px;color:var(--text-dim)}
+
+/* === SECTION HEAD === */
+.section-head{display:flex;align-items:baseline;gap:12px;margin-bottom:18px}
+.section-head h2{font-size:22px;font-weight:800;color:var(--text);letter-spacing:-.4px}
+.section-head .pill{font-size:12px;font-weight:600;color:var(--text-dim);background:var(--bg2);padding:4px 14px;border-radius:14px}
+
+/* === GRID === */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+
+/* === CARD === */
+.card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:18px 20px;cursor:pointer;transition:all .22s ease;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3.5px;border-radius:0 4px 4px 0;background:var(--border);transition:background .2s}
+.card:hover{border-color:var(--accent2);box-shadow:var(--shadow-accent);transform:translateY(-2px)}
+.card:hover::before{background:var(--accent)}
+.card.expanded{border-color:var(--accent2);box-shadow:var(--shadow)}
+.card.expanded::before{background:var(--accent)}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:8px}
+.card-name{font-size:14px;font-weight:700;color:var(--text);word-break:break-word;line-height:1.45;letter-spacing:-.2px}
+.fav-star{background:none;border:none;cursor:pointer;padding:3px;color:var(--border-hover);transition:all .2s;border-radius:6px;flex-shrink:0}
+.fav-star:hover{background:rgba(245,158,11,.08);color:var(--amber-dark);transform:scale(1.15)}
+.fav-star.active{color:var(--amber-dark)}
+.card-tag{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);padding:3px 10px;border-radius:6px}
+.card-prompt{display:none;margin-top:14px;padding:14px 16px;background:var(--bg);border-radius:var(--radius-sm);border:1px dashed var(--border);font-size:12.5px;color:var(--text-sec);font-family:'SF Mono','Fira Code','Courier New',monospace;line-height:1.7;word-break:break-word;animation:slideDown .2s ease}
+.card-prompt b{color:var(--accent);font-weight:700}
+.card.expanded .card-prompt{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:translateY(0)}}
+.card-actions{display:flex;gap:6px;margin-top:10px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border:1.5px solid var(--border);background:var(--surface);color:var(--text-sec);font-size:11.5px;font-weight:600;font-family:inherit;border-radius:8px;cursor:pointer;transition:all .18s ease}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn-primary:hover{background:#4f46e5;box-shadow:var(--shadow-accent);transform:translateY(-1px)}
+.btn-fav.active{color:var(--amber-dark);border-color:var(--amber)}
+
+/* === TOAST === */
+.toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);background:linear-gradient(135deg,var(--accent),#4f46e5);color:#fff;padding:12px 28px;border-radius:12px;font-size:13px;font-weight:700;z-index:999;transition:all .35s cubic-bezier(.34,1.56,.64,1);opacity:0;pointer-events:none;box-shadow:0 8px 24px rgba(99,102,241,.3);display:flex;align-items:center;gap:8px}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+
+/* === EMPTY === */
+.empty-state{text-align:center;padding:80px 20px;color:var(--text-dim)}
+.empty-state .empty-icon{margin-bottom:16px;color:var(--border-hover)}
+.empty-state p{font-size:15px;font-weight:500}
+
+/* === MULTI-SKILL BAR === */
+.multi-bar{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);background:var(--surface);border:1.5px solid var(--accent);padding:12px 24px;border-radius:100px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-accent);z-index:998;transition:all .4s cubic-bezier(.34,1.56,.64,1);opacity:0;pointer-events:none}
+.multi-bar.show{transform:translateX(-50%) translateY(0);opacity:1;pointer-events:auto}
+.multi-info{font-size:13px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:8px}
+.multi-info b{color:var(--accent)}
+
+/* === BOTTOM NAV (MOBILE) === */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:6px 0 calc(6px + env(safe-area-inset-bottom));box-shadow:0 -4px 20px rgba(0,0,0,.06)}
+.bottom-nav-inner{display:flex;justify-content:space-around;align-items:center;max-width:480px;margin:0 auto}
+.bnav-btn{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;color:var(--text-dim);font-size:10px;font-weight:600;font-family:inherit;padding:6px 12px;border-radius:10px;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.bnav-btn.active{color:var(--accent)}
+.bnav-btn.active .bnav-dot{opacity:1}
+.bnav-dot{width:4px;height:4px;border-radius:50%;background:var(--accent);opacity:0;transition:opacity .2s}
+
+/* === DRAWER OVERLAY === */
+.drawer-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:300;opacity:0;transition:opacity .3s;-webkit-backdrop-filter:blur(2px);backdrop-filter:blur(2px)}
+.drawer-overlay.show{display:block;opacity:1}
+.drawer{position:fixed;top:0;left:0;bottom:0;width:280px;max-width:80vw;background:var(--surface);z-index:301;transform:translateX(-100%);transition:transform .3s cubic-bezier(.32,.72,0,1);padding:20px 16px calc(20px + env(safe-area-inset-bottom));overflow-y:auto;box-shadow:8px 0 30px rgba(0,0,0,.1)}
+.drawer.open{transform:translateX(0)}
+.drawer-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.drawer-header h3{font-size:16px;font-weight:800;color:var(--text)}
+.drawer-close{background:none;border:none;color:var(--text-dim);cursor:pointer;padding:6px;border-radius:8px}
+.drawer-close:hover{background:var(--bg2)}
+
+/* === MOBILE TOGGLE === */
+.mobile-toggle{display:none;padding:10px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;width:100%;margin-bottom:14px;text-align:left;box-shadow:var(--shadow-sm);-webkit-tap-highlight-color:transparent}
+
+/* === MOBILE RESPONSIVE === */
+@media(max-width:860px){
+  body{padding-bottom:calc(70px + env(safe-area-inset-bottom))}
+  .sidebar{display:none!important}
+  .layout{padding:14px 12px}
+  .grid{grid-template-columns:1fr}
+  .header{padding:0 16px;padding-top:env(safe-area-inset-top);height:auto;min-height:56px;flex-wrap:wrap;padding-top:calc(10px + env(safe-area-inset-top));padding-bottom:10px}
+  .header-inner{flex-wrap:wrap;gap:8px}
+  .badges{width:100%;justify-content:center;gap:6px}
+  .badge{padding:5px 10px;font-size:10.5px}
+  .search-wrap{max-width:none;order:10;width:100%}
+  .mobile-toggle{display:flex;align-items:center;gap:8px}
+  .s-shortcut{display:none!important}
+  .bottom-nav{display:block}
+  .multi-bar{bottom:calc(74px + env(safe-area-inset-bottom));border-radius:14px;padding:10px 18px}
+  .toast{bottom:calc(90px + env(safe-area-inset-bottom))}
+  .card{padding:16px;border-radius:12px}
+  .card-name{font-size:13.5px}
+  .card-actions{flex-wrap:wrap}
+  .btn{padding:10px 16px;font-size:12px;border-radius:10px}
+  .section-head h2{font-size:18px}
+}
+@media(max-width:480px){
+  .grid{grid-template-columns:1fr}
+  .logo-sub{display:none}
+  .logo-text{font-size:16px}
+  .header-inner{gap:6px}
+  .badges{gap:4px}
+  .badge{padding:4px 8px;font-size:10px}
+}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon"><i data-lucide="zap" style="width:18px;height:18px"></i></div>
+      <span class="logo-text">Skills Dashboard</span>
+      <span class="logo-sub">Antigravity</span>
+    </div>
+    <div class="search-wrap">
+      <i data-lucide="search" class="s-icon" style="width:16px;height:16px"></i>
+      <input type="text" id="searchInput" placeholder="Search 1,400+ skills..." autocomplete="off">
+      <span class="s-shortcut">Ctrl+K</span>
+    </div>
+    <div class="badges">
+      <div class="badge"><i data-lucide="layers" style="width:13px;height:13px"></i> Total <b id="totalCount">0</b></div>
+      <div class="badge"><i data-lucide="eye" style="width:13px;height:13px"></i> Showing <b id="showCount">0</b></div>
+      <div class="badge"><i data-lucide="bookmark" style="width:13px;height:13px"></i> Saved <b id="favCount">0</b></div>
+    </div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar" id="sidebar"></aside>
+  <main class="content-area">
+    <button class="mobile-toggle" id="mobileToggle"><i data-lucide="sliders-horizontal" style="width:16px;height:16px"></i> Filter Categories</button>
+    <div class="section-head">
+      <h2 id="sectionTitle">All Skills</h2>
+      <span class="pill" id="sectionBadge">0 skills</span>
+    </div>
+    <div class="grid" id="grid"></div>
+    <div class="empty-state" id="emptyState" style="display:none">
+      <i data-lucide="search-x" class="empty-icon" style="width:52px;height:52px"></i>
+      <p>No skills match your search.</p>
+    </div>
+  </main>
+</div>
+
+<div class="toast" id="toast"><i data-lucide="check-circle" style="width:16px;height:16px"></i> <span id="toastMsg">Copied!</span></div>
+
+<div class="multi-bar" id="multiBar">
+  <div class="multi-info"><i data-lucide="layers" style="width:16px;height:16px;color:var(--accent)"></i> <b id="multiCount">0</b> saved skills</div>
+  <button class="btn btn-primary" onclick="copyCombinedPrompt()" style="border-radius:100px;padding:8px 18px"><i data-lucide="copy-check" style="width:14px;height:14px"></i> Copy Combined Prompt</button>
+</div>
+
+<!-- Mobile Bottom Nav -->
+<nav class="bottom-nav" id="bottomNav">
+  <div class="bottom-nav-inner">
+    <button class="bnav-btn active" onclick="bnav('all')" id="bnav-all"><i data-lucide="package" style="width:20px;height:20px"></i>All<span class="bnav-dot"></span></button>
+    <button class="bnav-btn" onclick="bnav('ai')" id="bnav-ai"><i data-lucide="bot" style="width:20px;height:20px"></i>AI<span class="bnav-dot"></span></button>
+    <button class="bnav-btn" onclick="bnav('web')" id="bnav-web"><i data-lucide="globe" style="width:20px;height:20px"></i>Web<span class="bnav-dot"></span></button>
+    <button class="bnav-btn" onclick="openDrawer()" id="bnav-more"><i data-lucide="menu" style="width:20px;height:20px"></i>More<span class="bnav-dot"></span></button>
+    <button class="bnav-btn" onclick="bnav('favs')" id="bnav-favs"><i data-lucide="bookmark" style="width:20px;height:20px"></i>Saved<span class="bnav-dot"></span></button>
+  </div>
+</nav>
+
+<!-- Drawer Overlay -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <h3>Categories</h3>
+    <button class="drawer-close" onclick="closeDrawer()"><i data-lucide="x" style="width:20px;height:20px"></i></button>
+  </div>
+  <div id="drawerCats"></div>
+</div>
+
+<script>
+const CATS = [
+  { id:"favs",      label:"Favorites",       icon:"bookmark",       section:"personal" },
+  { id:"essential",  label:"Essentials",       icon:"shield-check",   section:"core" },
+  { id:"web",        label:"Web & React",      icon:"globe",          section:"core" },
+  { id:"arch",       label:"Architecture",     icon:"building-2",     section:"core" },
+  { id:"backend",    label:"Backend",          icon:"server",         section:"core" },
+  { id:"db",         label:"Database",         icon:"database",       section:"core" },
+  { id:"ts",         label:"TypeScript / JS",  icon:"file-code-2",    section:"languages" },
+  { id:"py",         label:"Python",           icon:"terminal",       section:"languages" },
+  { id:"systems",    label:"Systems & Low",    icon:"cpu",            section:"languages" },
+  { id:"sec",        label:"Security",         icon:"lock",           section:"ops" },
+  { id:"cloud",      label:"DevOps & Cloud",   icon:"cloud",          section:"ops" },
+  { id:"test",       label:"Testing & QA",     icon:"test-tubes",     section:"ops" },
+  { id:"ai",         label:"AI & Agents",      icon:"bot",            section:"specialty" },
+  { id:"mobile",     label:"Mobile",           icon:"smartphone",     section:"specialty" },
+  { id:"design",     label:"UI / UX Design",   icon:"palette",        section:"specialty" },
+  { id:"seo",        label:"SEO & Marketing",  icon:"trending-up",    section:"specialty" },
+  { id:"data",       label:"Data & Analytics",  icon:"bar-chart-3",    section:"specialty" },
+  { id:"integr",     label:"Integrations",     icon:"plug",           section:"tools" },
+  { id:"git",        label:"Git & OSS",        icon:"git-branch",     section:"tools" },
+  { id:"wiki",       label:"Docs & Wiki",      icon:"book-open",      section:"tools" },
+  { id:"auto",       label:"Automation",       icon:"workflow",       section:"tools" },
+  { id:"docs",       label:"Documents",        icon:"file-text",      section:"tools" },
+  { id:"game",       label:"Game Dev",         icon:"gamepad-2",      section:"tools" },
+  { id:"biz",        label:"Business",         icon:"briefcase",      section:"tools" },
+  { id:"all",        label:"All Skills",       icon:"package",        section:"browse" }
+];
+
+const MATCHERS = {
+  favs:     s => _favs().includes(s),
+  essential: s => ["concise-planning","lint-and-validate","git-pushing","kaizen","systematic-debugging","clean-code","ask-questions-if-underspecified"].includes(s),
+  web:      s => /react|nextjs|frontend|tailwind|css|html|web-design|web-perf|shadcn|radix|astro|sveltekit|hono|vite/.test(s),
+  arch:     s => /architect|architecture|ddd|microservice|cqrs|event-sourc|saga|domain-driven|monorepo|senior-/.test(s),
+  backend:  s => /backend|api-|server-|node|express|nestjs|fastapi|django|laravel|hono|graphql|grpc|trpc/.test(s),
+  db:       s => /database|sql|postgres|mongo|drizzle|prisma|neon|supabase|nosql|redis/.test(s),
+  py:       s => /python|django|fastapi|flask|pydantic/.test(s) && !/azure/.test(s),
+  ts:       s => /typescript|javascript|nodejs|bun-|zustand|tanstack|zod-/.test(s),
+  sec:      s => /security|pentest|vulnerab|hack|xss|injection|penetration|burp|metasploit|red-team|threat|malware|shodan|sqli/.test(s),
+  cloud:    s => /docker|kubernetes|k8s|terraform|aws|azure|gcp|cloud|devops|cicd|helm|gitops|deploy/.test(s),
+  test:     s => /test|debug|e2e|playwright|vitest|jest|qa|tdd|lint|bug/.test(s),
+  ai:       s => /ai-|agent|llm|rag|langchain|langgraph|prompt|ml-|mlops|embedding|openai|gemini-api|crewai|hugging/.test(s),
+  mobile:   s => /mobile|react-native|flutter|ios|android|expo|swift/.test(s),
+  design:   s => /ui-|ux-|design|canvas|scroll|animation|animejs|iconsax|magic-ui|visual/.test(s),
+  seo:      s => /seo|marketing|content-creator|copywriting|growth|analytics|ab-test|email-seq|geo-fund/.test(s),
+  integr:   s => /stripe|twilio|hubspot|shopify|slack-|discord-|telegram|whatsapp|gmail|google-|outlook|notion-|jira|trello|zapier|n8n|make-auto/.test(s),
+  docs:     s => /docx|pptx|xlsx|pdf-|libreoffice|office-prod|latex|presentation/.test(s),
+  systems:  s => /rust|golang|go-|cpp|c-pro|haskell|elixir|scala|julia|bevy|memory-safety/.test(s),
+  game:     s => /game|unity|godot|unreal|minecraft/.test(s),
+  data:     s => /data-|dbt|airflow|spark|polars|plotly|matplotlib|seaborn|d3js|vector-database/.test(s),
+  git:      s => /git-|commit|create-pr|pr-writer|changelog|code-review|github|gitlab|bitbucket/.test(s),
+  wiki:     s => /doc|wiki|readme|writing-|tutorial/.test(s),
+  biz:      s => /startup|business|product-|pricing|monetiz|launch|competitor|market-siz|kpi/.test(s),
+  auto:     s => /automation|workflow|inngest|trigger-dev/.test(s),
+  all:      () => true
+};
+
+// State
+let activeCat = "all";
+let query = "";
+
+function _favs() { try { return JSON.parse(localStorage.getItem("ag_favs")||"[]"); } catch { return []; } }
+function _setFavs(f) { localStorage.setItem("ag_favs",JSON.stringify(f)); }
+function toggleFav(s,e) {
+  if(e) e.stopPropagation();
+  const f=_favs(), i=f.indexOf(s);
+  if(i>=0) f.splice(i,1); else f.push(s);
+  _setFavs(f); render();
+}
+
+function copyPrompt(s,e) {
+  if(e) e.stopPropagation();
+  const p = "Use the "+s+" skill to help me with this task:";
+  navigator.clipboard.writeText(p).then(()=>toast("Copied prompt for "+s));
+}
+
+function copyCombinedPrompt() {
+  const f = _favs();
+  if(!f.length) return;
+  const skillList = f.map(s => "`"+s+"`").join(" and ");
+  const p = "Use the " + skillList + " skills to help me with this task:";
+  navigator.clipboard.writeText(p).then(()=>toast("Copied combined prompt for "+f.length+" skills!"));
+}
+
+function toast(msg) {
+  const t=document.getElementById("toastMsg");
+  t.textContent=msg;
+  document.getElementById("toast").classList.add("show");
+  setTimeout(()=>document.getElementById("toast").classList.remove("show"),2600);
+}
+
+function catLabel(s) {
+  for(const c of CATS) { if(c.id==="favs"||c.id==="all") continue; if(MATCHERS[c.id](s)) return c.label; }
+  return "Other";
+}
+
+// Sidebar
+const SECTIONS = {personal:"Personal",core:"Development",languages:"Languages",ops:"Operations",specialty:"Specialty",tools:"Tools & More",browse:""};
+
+function renderSidebar() {
+  const sb=document.getElementById("sidebar"); sb.innerHTML="";
+  let lastSec = "";
+  for(const c of CATS) {
+    const cnt=ALL_SKILLS.filter(s=>MATCHERS[c.id](s)).length;
+    if(c.id==="favs"&&cnt===0) continue;
+    if(c.section!==lastSec && SECTIONS[c.section]) {
+      const lbl=document.createElement("div");
+      lbl.className="cat-section-label";
+      lbl.textContent=SECTIONS[c.section];
+      sb.appendChild(lbl);
+      lastSec=c.section;
+    }
+    const b=document.createElement("button");
+    b.className="cat-btn"+(activeCat===c.id?" active":"");
+    b.innerHTML='<i data-lucide="'+c.icon+'" class="cat-icon"></i>'+c.label+'<span class="cat-count">'+cnt+'</span>';
+    b.onclick=()=>{ activeCat=c.id; query=""; document.getElementById("searchInput").value=""; render(); };
+    sb.appendChild(b);
+  }
+  lucide.createIcons();
+}
+
+// Grid
+function render() {
+  const grid=document.getElementById("grid");
+  const empty=document.getElementById("emptyState");
+  const favs=_favs();
+
+  let skills = ALL_SKILLS.filter(s=>MATCHERS[activeCat](s));
+  if(query) { const q=query.toLowerCase(); skills=ALL_SKILLS.filter(s=>s.toLowerCase().includes(q)); }
+
+  document.getElementById("totalCount").textContent=ALL_SKILLS.length;
+  document.getElementById("showCount").textContent=skills.length;
+  document.getElementById("favCount").textContent=favs.length;
+  
+  const mb = document.getElementById("multiBar");
+  if(favs.length > 0) {
+    document.getElementById("multiCount").textContent = favs.length;
+    mb.classList.add("show");
+  } else {
+    mb.classList.remove("show");
+  }
+
+  const cat=CATS.find(c=>c.id===activeCat);
+  document.getElementById("sectionTitle").textContent=query?'Results for "'+query+'"':cat.label;
+  document.getElementById("sectionBadge").textContent=skills.length+" skills";
+
+  if(!skills.length){ grid.innerHTML=""; empty.style.display="block"; renderSidebar(); return; }
+  empty.style.display="none";
+
+  skills.sort((a,b)=>{
+    const af=favs.includes(a)?0:1, bf=favs.includes(b)?0:1;
+    if(af!==bf) return af-bf;
+    return a.localeCompare(b);
+  });
+
+  grid.innerHTML=skills.map(s=>{
+    const isFav=favs.includes(s);
+    return '<div class="card" onclick="this.classList.toggle(\'expanded\')">'
+      +'<div class="card-top">'
+        +'<div class="card-name">'+s+'</div>'
+        +'<button class="fav-star'+(isFav?' active':'')+'" onclick="toggleFav(\''+s+'\',event)" title="'+(isFav?'Remove from saved':'Save skill')+'">'
+          +'<i data-lucide="'+(isFav?'bookmark':'bookmark')+'" style="width:16px;height:16px;'+(isFav?'fill:currentColor':'')+'" ></i>'
+        +'</button>'
+      +'</div>'
+      +'<span class="card-tag"><i data-lucide="tag" style="width:11px;height:11px"></i> '+catLabel(s)+'</span>'
+      +'<div class="card-prompt">'
+        +'<b>Copy this prompt:</b><br><br>'
+        +'Use the <b>'+s+'</b> skill to help me with this task:'
+      +'</div>'
+      +'<div class="card-actions">'
+        +'<button class="btn btn-primary" onclick="copyPrompt(\''+s+'\',event)"><i data-lucide="clipboard-copy" style="width:13px;height:13px"></i> Copy Prompt</button>'
+        +'<button class="btn btn-fav'+(isFav?' active':'')+'" onclick="toggleFav(\''+s+'\',event)"><i data-lucide="bookmark" style="width:13px;height:13px;'+(isFav?'fill:currentColor':'')+'" ></i> '+(isFav?'Saved':'Save')+'</button>'
+      +'</div>'
+    +'</div>';
+  }).join("");
+
+  renderSidebar();
+  lucide.createIcons();
+}
+
+// Events
+document.getElementById("searchInput").addEventListener("input",e=>{
+  query=e.target.value.trim();
+  if(!query) activeCat="all";
+  render();
+});
+
+// Ctrl+K shortcut
+document.addEventListener("keydown",e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key==="k"){e.preventDefault();document.getElementById("searchInput").focus();}
+  if(e.key==="Escape"){document.getElementById("searchInput").value="";query="";activeCat="all";render();}
+});
+
+// Mobile toggle
+document.getElementById("mobileToggle").addEventListener("click",()=>{
+  const sb=document.getElementById("sidebar");
+  const vis=sb.style.display==="block";
+  sb.style.display=vis?"none":"block";
+  if(!vis){sb.style.position="fixed";sb.style.top="64px";sb.style.left="0";sb.style.width="260px";sb.style.height="calc(100vh - 64px)";sb.style.background="#fff";sb.style.padding="12px";sb.style.zIndex="200";sb.style.borderRight="1px solid var(--border)";sb.style.boxShadow="4px 0 30px rgba(0,0,0,.1)";}
+});
+
+// Init
+render();
+lucide.createIcons();
+
+// === MOBILE: Bottom Nav ===
+function bnav(cat) {
+  activeCat = cat; query = ""; document.getElementById("searchInput").value = "";
+  document.querySelectorAll(".bnav-btn").forEach(b => b.classList.remove("active"));
+  const btn = document.getElementById("bnav-" + cat);
+  if (btn) btn.classList.add("active");
+  render();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+// === MOBILE: Drawer ===
+function openDrawer() {
+  const d = document.getElementById("drawer");
+  const o = document.getElementById("drawerOverlay");
+  renderDrawerCats();
+  o.classList.add("show");
+  setTimeout(() => d.classList.add("open"), 10);
+  document.body.style.overflow = "hidden";
+}
+function closeDrawer() {
+  document.getElementById("drawer").classList.remove("open");
+  const o = document.getElementById("drawerOverlay");
+  setTimeout(() => { o.classList.remove("show"); document.body.style.overflow = ""; }, 300);
+}
+function renderDrawerCats() {
+  const dc = document.getElementById("drawerCats");
+  if (!dc) return;
+  dc.innerHTML = "";
+  let lastSec = "";
+  for (const c of CATS) {
+    const cnt = ALL_SKILLS.filter(s => MATCHERS[c.id](s)).length;
+    if (c.id === "favs" && cnt === 0) continue;
+    if (c.section !== lastSec && SECTIONS[c.section]) {
+      const lbl = document.createElement("div");
+      lbl.className = "cat-section-label";
+      lbl.textContent = SECTIONS[c.section];
+      dc.appendChild(lbl);
+      lastSec = c.section;
+    }
+    const b = document.createElement("button");
+    b.className = "cat-btn" + (activeCat === c.id ? " active" : "");
+    b.innerHTML = '<i data-lucide="' + c.icon + '" class="cat-icon"></i>' + c.label + '<span class="cat-count">' + cnt + '</span>';
+    b.onclick = () => { activeCat = c.id; query = ""; document.getElementById("searchInput").value = ""; closeDrawer(); render();
+      document.querySelectorAll(".bnav-btn").forEach(bn => bn.classList.remove("active"));
+      window.scrollTo({top:0,behavior:"smooth"});
+    };
+    dc.appendChild(b);
+  }
+  lucide.createIcons();
+}
+
+// === Capacitor Integration ===
+(async function initCapacitor() {
+  try {
+    if (typeof Capacitor !== "undefined" && Capacitor.isNativePlatform && Capacitor.isNativePlatform()) {
+      console.log("[Capacitor] Running on native platform:", Capacitor.getPlatform());
+      // StatusBar plugin (if available)
+      if (Capacitor.Plugins && Capacitor.Plugins.StatusBar) {
+        Capacitor.Plugins.StatusBar.setStyle({ style: "LIGHT" });
+        Capacitor.Plugins.StatusBar.setBackgroundColor({ color: "#6366f1" });
+      }
+      // Haptics on copy
+      const origCopy = window.copyPrompt;
+      window.copyPrompt = function(s, e) {
+        origCopy(s, e);
+        if (Capacitor.Plugins && Capacitor.Plugins.Haptics) {
+          Capacitor.Plugins.Haptics.impact({ style: "LIGHT" });
+        }
+      };
+    } else {
+      console.log("[Capacitor] Running in web browser mode");
+    }
+  } catch (e) { console.log("[Capacitor] Init skipped:", e.message); }
+})();
+</script>
+</body>
+</html>
